@@ -1,12 +1,15 @@
 import 'dart:ffi';
 
 import 'package:ffi/ffi.dart';
+import 'package:mpv_audio/core/mpv/mpv_local.dart';
 import 'package:mpv_audio/core/mpv/types.dart';
 import 'package:mpv_audio/core/result_t.dart';
 import 'package:mpv_audio/mpv_audio_bindings_generated.dart';
 
 ///create && init
 Result<Pointer<mpv_handle>, String> createMpv(MpvAudioBindings lib) {
+  setNumericLocale();
+
   final mpv = lib.mpv_create();
 
   if (mpv == nullptr) {

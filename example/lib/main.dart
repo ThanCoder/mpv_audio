@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:mpv_audio/mpv_audio.dart';
 
 void main() {
   runApp(MaterialApp(home: const MyApp()));
@@ -11,11 +12,60 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
+const String libPath =
+    '/home/thancoder/Downloads/mpv_audio_lib/libmpv_linux-x86_64.so';
+const String aPath = '/home/thancoder/Music/test.mp3';
+
 class _MyAppState extends State<MyApp> {
   @override
+  void initState() {
+    super.initState();
+  }
+
+  final mpv = MpvAudio(libPath: libPath);
+  String resText = '';
+
+  @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(appBar: AppBar(title: const Text('Native Packages'))),
+    return Scaffold(
+      appBar: AppBar(title: const Text('Native Packages')),
+      body: Column(
+        spacing: 10,
+        children: [
+          Center(child: CircularProgressIndicator.adaptive()),
+
+          SizedBox(height: 20),
+          FilledButton(
+            onPressed: () {
+              try {
+                mpv.init();
+                setState(() {
+                  resText = '';
+                });
+              } catch (e) {
+                setState(() {
+                  resText = e.toString();
+                });
+              }
+            },
+            child: Text('init'),
+          ),
+          FilledButton(
+            onPressed: () {
+              mpv
+                  .playAudio(aPath)
+                  .onError(
+                    onErr: (err) => setState(() {
+                      resText = err;
+                    }),
+                  );
+            },
+            child: Text('Play Song'),
+          ),
+          SizedBox(height: 10),
+          Text(resText),
+        ],
+      ),
     );
   }
 }

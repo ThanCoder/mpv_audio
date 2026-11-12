@@ -27,6 +27,10 @@ sealed class Result<T, E> {
     Ok(val: final val) => onOk(val),
     Err(val: final val) => onErr(val),
   };
+  void onError({required void Function(E err) onErr}) => switch (this) {
+    Ok() => {},
+    Err(val: final val) => onErr(val),
+  };
 }
 
 class Ok<T, E> extends Result<T, E> {

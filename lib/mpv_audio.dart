@@ -22,12 +22,17 @@ class MpvAudio {
 
   Pointer<mpv_handle> _mpv = nullptr;
 
+  int get mpvClientApiVersion => _lib.mpv_client_api_version();
+
+  ///  initialized
   void init() async {
     final res = createMpv(_lib);
     if (res.isErr) {
       throw Exception(res.unwrapError());
     }
     _mpv = res.unwrap();
+
+    // Pointer<mpv_handle>.fromAddress(1);
 
     mpvObserve(_lib, _mpv, 'time-pos', 1, mpv_format.MPV_FORMAT_DOUBLE);
 
