@@ -1,0 +1,16 @@
+# Run with `dart run ffigen --config ffigen.yaml`.
+name: MpvAudioBindings
+description: |
+  Bindings for `src/mpv_audio.h`.
+
+  Regenerate bindings with `dart run ffigen --config ffigen.yaml`.
+output: 'lib/mpv_audio_bindings_generated.dart'
+headers:
+  entry-points:
+  - 'src/libmpv_client.h'
+  include-directives:
+  - 'src/libmpv_client.h'
+# ffi-native:
+comments:
+  style: any
+  length: full
