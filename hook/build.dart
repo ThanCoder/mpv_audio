@@ -13,26 +13,26 @@ void main(List<String> args) async {
     final packageRootDir = input.packageRoot.toFilePath();
     final nativeAssets = p.join(packageRootDir, '.dart_tool', 'native_assets');
 
-    final archiveLib = LibArchiveConfig.create(input.config.code);
+    // final archiveLib = LibArchiveConfig.create(input.config.code);
 
-    await extractLib(archiveLib, nativeAssets: nativeAssets);
+    // await extractLib(archiveLib, nativeAssets: nativeAssets);
 
-    for (var lib in archiveLib.libs) {
-      final f = File(
-        p.join(nativeAssets, archiveLib.platform, archiveLib.arch, lib.libName),
-      );
+    // for (var lib in archiveLib.libs) {
+    //   final f = File(
+    //     p.join(nativeAssets, archiveLib.platform, archiveLib.arch, lib.libName),
+    //   );
 
-      if (!f.existsSync()) continue;
+    //   if (!f.existsSync()) continue;
 
-      output.assets.code.add(
-        .new(
-          package: packageName,
-          name: lib.libName,
-          linkMode: DynamicLoadingBundled(),
-          file: f.uri,
-        ),
-      );
-    }
+    //   output.assets.code.add(
+    //     .new(
+    //       package: packageName,
+    //       name: lib.libName,
+    //       linkMode: DynamicLoadingBundled(),
+    //       file: f.uri,
+    //     ),
+    //   );
+    // }
   });
 }
 
