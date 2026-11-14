@@ -75,8 +75,6 @@ void _bgBgMvCommanderThread((String?, int, SendPort) args) {
         final mpvLoadMode = msg['mpvLoadMode'] as MpvLoadMode;
         final path = msg['path'] as String;
 
-        print('bg path');
-
         final res = runMpvCommand(lib, mpv, path, command, mpvLoadMode);
         res.onResult(
           onErr: (err) {
