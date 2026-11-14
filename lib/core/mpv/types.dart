@@ -30,3 +30,54 @@ enum MpvLoadMode {
 
   String get mode => value ?? name;
 }
+
+enum AudioArgCommand {
+  ///['loadfile', path, 'replace'],
+  play,
+
+  /// [
+  //   'seek',
+  //   seconds.toString(),
+  //   relative ? 'relative' : 'absolute',
+  // ],
+  seek,
+
+  ///['set', 'volume', volume.toString()],
+  setVolume,
+}
+
+enum AudioCommand {
+  ///['loadfile', path, 'replace'],
+  // play,
+
+  /// ['stop'],
+  stop,
+
+  /// ['set', 'pause', 'yes'],
+  pause,
+
+  /// ['set', 'pause', 'no'],
+  resume,
+
+  /// ['cycle', 'pause'],
+  togglePause;
+
+  /// [
+  //   'seek',
+  //   seconds.toString(),
+  //   relative ? 'relative' : 'absolute',
+  // ],
+  // seek,
+
+  ///['set', 'volume', volume.toString()],
+  // setVolume;
+
+  List<String> toArgs() {
+    return switch (this) {
+      stop => ['stop'],
+      pause => ['set', 'pause', 'yes'],
+      resume => ['set', 'pause', 'no'],
+      togglePause => ['cycle', 'pause'],
+    };
+  }
+}

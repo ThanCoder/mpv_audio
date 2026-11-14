@@ -16,11 +16,7 @@ void main() {
   final mpv = MpvAudio(libPath: path);
   mpv.init();
 
-  final res = mpv.playAudio(aPath);
-
-  if (res.isErr) {
-    print('error: ${res.unwrapError()}');
-  }
+  // final res = mpv.playAudio(aPath);
 
   // stdout.writeln("Wait...");
   // stdin.readLineSync();

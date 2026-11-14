@@ -22,7 +22,7 @@ class _MyAppState extends State<MyApp> {
     super.initState();
   }
 
-  final mpv = MpvAudio(libPath: libPath);
+  final mpv = MpvAudio();
   String resText = '';
 
   @override
@@ -32,8 +32,6 @@ class _MyAppState extends State<MyApp> {
       body: Column(
         spacing: 10,
         children: [
-          Center(child: CircularProgressIndicator.adaptive()),
-
           SizedBox(height: 20),
           FilledButton(
             onPressed: () {
@@ -52,16 +50,45 @@ class _MyAppState extends State<MyApp> {
           ),
           FilledButton(
             onPressed: () {
-              mpv
-                  .playAudio(aPath)
-                  .onError(
-                    onErr: (err) => setState(() {
-                      resText = err;
-                    }),
-                  );
+              try {
+                mpv.dispose();
+                setState(() {
+                  resText = '';
+                });
+              } catch (e) {
+                setState(() {
+                  resText = e.toString();
+                });
+              }
+            },
+            child: Text('dispose'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              final res = await mpv.playAudio(aPath);
+
+              res.onError(
+                onErr: (err) => setState(() {
+                  resText = err;
+                }),
+              );
             },
             child: Text('Play Song'),
           ),
+          FilledButton(
+            onPressed: () async {
+              final res = await mpv.pause(aPath);
+              print('pause');
+
+              res.onError(
+                onErr: (err) => setState(() {
+                  resText = err;
+                }),
+              );
+            },
+            child: Text('Pause Song'),
+          ),
+          Center(child: CircularProgressIndicator.adaptive()),
           SizedBox(height: 10),
           Text(resText),
         ],

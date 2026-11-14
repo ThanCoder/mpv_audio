@@ -26,35 +26,34 @@ Result<Pointer<mpv_handle>, String> createMpv(MpvAudioBindings lib) {
 Result<bool, String> runMpvCommand(
   MpvAudioBindings lib,
   Pointer<mpv_handle> mpv,
-  MpvCommand command,
-  String file,
-  MpvLoadMode loadMode,
+  AudioCommand command,
 ) {
-  final args = calloc<Pointer<Char>>(4);
+  return runMpvRawCommand(lib, mpv, command.toArgs());
+  // final args = calloc<Pointer<Char>>(4);
 
-  final commandN = command.command.toNativeUtf8();
-  final fileN = file.toNativeUtf8();
-  final modeN = loadMode.mode.toNativeUtf8();
+  // final commandN = command.command.toNativeUtf8();
+  // final fileN = file.toNativeUtf8();
+  // final modeN = loadMode.mode.toNativeUtf8();
 
-  args[0] = commandN.cast<Char>();
-  args[1] = fileN.cast<Char>();
-  args[2] = modeN.cast<Char>();
-  args[3] = nullptr;
+  // args[0] = commandN.cast<Char>();
+  // args[1] = fileN.cast<Char>();
+  // args[2] = modeN.cast<Char>();
+  // args[3] = nullptr;
 
-  try {
-    final res = lib.mpv_command(mpv, args);
-    if (res < 0) {
-      return Err('mpv_command failed: $res');
-    }
-    return Ok(true);
-  } catch (e) {
-    return Err(e.toString());
-  } finally {
-    malloc.free(commandN);
-    malloc.free(fileN);
-    malloc.free(modeN);
-    calloc.free(args);
-  }
+  // try {
+  //   final res = lib.mpv_command(mpv, args);
+  //   if (res < 0) {
+  //     return Err('mpv_command failed: $res');
+  //   }
+  //   return Ok(true);
+  // } catch (e) {
+  //   return Err(e.toString());
+  // } finally {
+  //   malloc.free(commandN);
+  //   malloc.free(fileN);
+  //   malloc.free(modeN);
+  //   calloc.free(args);
+  // }
 }
 
 /// mpv observe
@@ -80,5 +79,43 @@ void mpvObserve(
     }
   } finally {
     malloc.free(ptr);
+  }
+}
+
+/// raw mpv command
+Result<bool, String> runMpvRawCommand(
+  MpvAudioBindings lib,
+  Pointer<mpv_handle> mpv,
+  List<String> arguments,
+) {
+  final args = calloc<Pointer<Char>>(arguments.length + 1);
+
+  final nativeArgs = <Pointer<Char>>[];
+
+  try {
+    for (var i = 0; i < arguments.length; i++) {
+      final value = arguments[i].toNativeUtf8().cast<Char>();
+
+      nativeArgs.add(value);
+      args[i] = value;
+    }
+
+    args[arguments.length] = nullptr;
+
+    final res = lib.mpv_command(mpv, args);
+
+    if (res < 0) {
+      return Err('mpv_command failed: $res');
+    }
+
+    return Ok(true);
+  } catch (e) {
+    return Err(e.toString());
+  } finally {
+    for (final arg in nativeArgs) {
+      malloc.free(arg);
+    }
+
+    calloc.free(args);
   }
 }

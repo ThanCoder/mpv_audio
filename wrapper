@@ -1,0 +1,122 @@
+Result<bool, String> runMpvCommand(
+  MpvAudioBindings lib,
+  Pointer<mpv_handle> mpv,
+  List<String> arguments,
+) {
+  final args = calloc<Pointer<Char>>(arguments.length + 1);
+
+  final nativeArgs = <Pointer<Char>>[];
+
+  try {
+    for (var i = 0; i < arguments.length; i++) {
+      final value = arguments[i].toNativeUtf8().cast<Char>();
+
+      nativeArgs.add(value);
+      args[i] = value;
+    }
+
+    args[arguments.length] = nullptr;
+
+    final res = lib.mpv_command(mpv, args);
+
+    if (res < 0) {
+      return Err('mpv_command failed: $res');
+    }
+
+    return Ok(true);
+  } catch (e) {
+    return Err(e.toString());
+  } finally {
+    for (final arg in nativeArgs) {
+      malloc.free(arg);
+    }
+
+    calloc.free(args);
+  }
+}
+
+
+class MpvAudioController {
+  final MpvAudioBindings lib;
+  final Pointer<mpv_handle> mpv;
+
+  MpvAudioController(this.lib, this.mpv);
+
+  /// Load audio file
+  Result<bool, String> play(String path) {
+    return runMpvCommand(
+      lib,
+      mpv,
+      ['loadfile', path, 'replace'],
+    );
+  }
+
+  /// Stop playback
+  Result<bool, String> stop() {
+    return runMpvCommand(
+      lib,
+      mpv,
+      ['stop'],
+    );
+  }
+
+  /// Pause playback
+  Result<bool, String> pause() {
+    return runMpvCommand(
+      lib,
+      mpv,
+      ['set', 'pause', 'yes'],
+    );
+  }
+
+  /// Resume playback
+  Result<bool, String> resume() {
+    return runMpvCommand(
+      lib,
+      mpv,
+      ['set', 'pause', 'no'],
+    );
+  }
+
+  /// Toggle pause
+  Result<bool, String> togglePause() {
+    return runMpvCommand(
+      lib,
+      mpv,
+      ['cycle', 'pause'],
+    );
+  }
+
+  /// Seek forward / backward
+  Result<bool, String> seek(
+    double seconds, {
+    bool relative = true,
+  }) {
+    return runMpvCommand(
+      lib,
+      mpv,
+      [
+        'seek',
+        seconds.toString(),
+        relative ? 'relative' : 'absolute',
+      ],
+    );
+  }
+
+  /// Seek to specific position
+  Result<bool, String> seekTo(Duration position) {
+    return seek(
+      position.inMilliseconds / 1000,
+      relative: false,
+    );
+  }
+
+  /// Set volume (0 - 100)
+  Result<bool, String> setVolume(double volume) {
+    return runMpvCommand(
+      lib,
+      mpv,
+      ['set', 'volume', volume.toString()],
+    );
+  }
+}

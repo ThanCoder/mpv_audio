@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:ffi';
 
+import 'package:mpv_audio/core/bg_isolate/bg_event_thread.dart';
+import 'package:mpv_audio/core/bg_isolate/bg_mv_commander_thread.dart';
 import 'package:mpv_audio/core/keys.dart';
 import 'package:mpv_audio/core/mpv/mpv_core.dart';
 import 'package:mpv_audio/core/result_t.dart';
@@ -24,6 +26,9 @@ class MpvAudio {
 
   int get mpvClientApiVersion => _lib.mpv_client_api_version();
 
+  final BgEventThread _bgEventThread = .new();
+  final BgMvCommanderThread _bgMvCommanderThread = .new();
+
   ///  initialized
   void init() async {
     final res = createMpv(_lib);
@@ -39,84 +44,34 @@ class MpvAudio {
     mpvObserve(_lib, _mpv, 'duration', 2, mpv_format.MPV_FORMAT_DOUBLE);
 
     mpvObserve(_lib, _mpv, 'pause', 3, mpv_format.MPV_FORMAT_FLAG);
+
+    // await _bgEventThread.init(_libPath, _mpv.address);
+    await _bgMvCommanderThread.init(_libPath, _mpv.address);
   }
 
   /// close && free memory
-  void dispose() {
+  Future<void> dispose() async {
+    await _bgEventThread.dispose();
+    await _bgMvCommanderThread.dispose();
+
     if (_mpv != nullptr) {
       _lib.mpv_terminate_destroy(_mpv);
     }
   }
 
-  Result<bool, String> playAudio(String path) {
-    final res = runMpvCommand(_lib, _mpv, .loadfile, path, .replace);
-    if (res.isOk) {
-      _waitEvents();
-    }
-    return res;
+  Future<Result<bool, String>> playAudio(String path) async {
+    return await _bgMvCommanderThread.sendCommand(
+      path,
+      command: .loadfile,
+      mode: .replace,
+    );
   }
 
-  bool _isListening = false;
-
-  Future<void> _waitEvents() async {
-    if (_isListening) return;
-
-    _isListening = true;
-
-    try {
-      while (_isListening) {
-        final event = _lib.mpv_wait_event(_mpv, 0.1);
-
-        final eventId = event.ref.event_id;
-
-        if (eventId == mpv_event_id.MPV_EVENT_NONE) {
-          continue;
-        }
-
-        if (eventId == mpv_event_id.MPV_EVENT_PROPERTY_CHANGE) {
-          final userdata = event.ref.reply_userdata;
-          final property = event.ref.data.cast<mpv_event_property>();
-
-          if (property == nullptr) continue;
-
-          if (property.ref.format == mpv_format.MPV_FORMAT_NONE) {
-            continue;
-          }
-
-          switch (userdata) {
-            case 1:
-              final position = property.ref.data.cast<Double>().value;
-              print('Position: $position seconds');
-
-            case 2:
-              final duration = property.ref.data.cast<Double>().value;
-              print('Duration: $duration seconds');
-
-            case 3:
-              final paused = property.ref.data.cast<Int32>().value != 0;
-              print('Paused: $paused');
-          }
-        }
-
-        if (eventId == mpv_event_id.MPV_EVENT_START_FILE) {
-          print('Starting file...');
-        }
-        if (eventId == mpv_event_id.MPV_EVENT_FILE_LOADED) {
-          print('File loaded!');
-        }
-        if (eventId == mpv_event_id.MPV_EVENT_PLAYBACK_RESTART) {
-          print('Playback started!');
-        }
-        if (eventId == mpv_event_id.MPV_EVENT_END_FILE) {
-          print('Playback ended!');
-        }
-        if (eventId == mpv_event_id.MPV_EVENT_SHUTDOWN) {
-          print('Player shutdown!');
-          _isListening = false;
-        }
-      }
-    } finally {
-      _isListening = false;
-    }
+  Future<Result<bool, String>> pause(String path) async {
+    return await _bgMvCommanderThread.sendCommand(
+      path,
+      command: .stop,
+      mode: .replace,
+    );
   }
 }
